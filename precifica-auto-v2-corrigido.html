@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Precifica Auto V2</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f6f8;color:#172033}
+.app{max-width:480px;margin:auto;min-height:100vh;background:#fff}
+header{padding:28px 22px 18px;background:#0f172a;color:#fff;border-radius:0 0 24px 24px}
+.logo{font-size:13px;letter-spacing:1.8px;font-weight:700;opacity:.75}
+.title{font-size:29px;font-weight:800;margin-top:5px}
+.subtitle{font-size:14px;opacity:.8;margin-top:5px}
+main{padding:20px 18px 34px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px rgba(15,23,42,.05)}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:8px;color:#4b5563}
+input{width:100%;font-size:20px;padding:14px;border:1px solid #d6dae1;border-radius:12px;outline:none;background:#fff}
+input:focus{border-color:#64748b;box-shadow:0 0 0 3px rgba(100,116,139,.12)}
+.range{background:#f8fafc;border-radius:14px;padding:14px;margin-top:10px}
+.range b{display:block;font-size:16px}.range span{font-size:13px;color:#64748b}
+.margins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+button{border:0;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
+.margin{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.margin.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.result{background:#ecfdf5;border:1px solid #bbf7d0;text-align:center;padding:20px;border-radius:18px;margin-top:15px}
+.result small{font-weight:700;color:#166534}.price{font-size:40px;font-weight:900;color:#14532d;margin:4px 0}
+.stats{display:flex;justify-content:center;gap:22px;font-size:13px;color:#475569}.stats b{color:#172033}
+.explain{background:#f8fafc}.formula{margin-top:12px;line-height:1.7;font-size:14px}
+.secondary{display:flex;gap:10px;margin-top:12px}
+.secondary button{flex:1;background:#fff;border:1px solid #e2e8f0;color:#334155}
+.primary{width:100%;background:#0f172a;color:#fff;margin-top:12px}
+.note{font-size:12px;color:#64748b;line-height:1.5;margin:10px 2px}
+.panel{display:none}.history-item{padding:13px 0;border-bottom:1px solid #e5e7eb}
+.history-item:last-child{border-bottom:0}
+.smallbtn{padding:8px 10px;font-size:12px;background:#f1f5f9;color:#334155;margin-top:7px}
+.danger{color:#991b1b!important;border-color:#fecaca!important}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="logo">PRECIFICA AUTO</div>
+<div class="title">Preço certo, sem complicação.</div>
+<div class="subtitle">Calculadora de margem para peças automotivas</div>
+</header>
+<main>
+
+<section class="card">
+<label>1. Nome da peça</label>
+<input id="piece" placeholder="Ex.: Junta homocinética" autocomplete="off">
+<div style="height:14px"></div>
+<label>2. Quanto você pagou pela peça?</label>
+<input id="cost" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off">
+<div class="range">
+<b id="range">Digite o custo da peça</b>
+<span id="rangeText">O aplicativo identificará sua faixa de margem.</span>
+</div>
+</section>
+
+<section class="card">
+<label>3. Escolha sua margem</label>
+<div class="margins" id="margins"></div>
+<div class="note">As opções mudam automaticamente conforme o valor da peça.</div>
+</section>
+
+<section class="card">
+<label>4. Custos adicionais (se houver)</label>
+<input id="extra" inputmode="decimal" placeholder="Frete / outros: R$ 0,00" autocomplete="off">
+<div style="height:12px"></div>
+<label>5. Taxa sobre a venda (se houver)</label>
+<input id="fee" inputmode="decimal" placeholder="Ex.: 3% ou 0%" autocomplete="off">
+</section>
+
+<div class="result">
+<small>PREÇO SUGERIDO PARA COBRAR</small>
+<div class="price" id="price">R$ 0,00</div>
+<div class="stats">
+<span>Lucro: <b id="profit">R$ 0,00</b></span>
+<span>Margem: <b id="chosen">—</b></span>
+</div>
+</div>
+
+<details class="card explain">
+<summary>💡 Entenda o cálculo</summary>
+<div class="formula" id="formula">Digite o custo e escolha uma margem para ver a explicação.</div>
+</details>
+
+<button class="primary" id="saveBtn">💾 Salvar precificação</button>
+
+<div class="secondary">
+<button id="newBtn">↻ Nova peça</button>
+<button id="historyBtn">📋 Histórico</button>
+</div>
+<div class="secondary">
+<button id="settingsBtn">⚙️ Configurações</button>
+</div>
+
+<section class="card panel" id="panel"></section>
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var piece=document.getElementById("piece");
+var cost=document.getElementById("cost");
+var extra=document.getElementById("extra");
+var fee=document.getElementById("fee");
+var range=document.getElementById("range");
+var rangeText=document.getElementById("rangeText");
+var price=document.getElementById("price");
+var profit=document.getElementById("profit");
+var chosen=document.getElementById("chosen");
+var formula=document.getElementById("formula");
+var marginsBox=document.getElementById("margins");
+var panel=document.getElementById("panel");
+var margin=0.40;
+
+function num(v){
+  if(v===null || v===undefined || v==="") return 0;
+  var s=String(v).trim().replace(/R\\$/g,"").replace(/\\s/g,"");
+  if(s.indexOf(",")>=0 && s.indexOf(".")>=0){
+    s=s.replace(/\\./g,"").replace(",",".");
+  }else{
+    s=s.replace(",",".");
+  }
+  s=s.replace(/[^0-9.-]/g,"");
+  var n=parseFloat(s);
+  return isFinite(n)?n:0;
+}
+function money(v){
+  return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function detect(c){
+  if(!c) return {name:"Digite o custo da peça",min:0,max:0,opts:[0.40,0.45,0.50]};
+  if(c<=100) return {name:"Faixa até R$ 100",min:0.40,max:0.50,opts:[0.40,0.45,0.50]};
+  if(c<=300) return {name:"Faixa de R$ 101 a R$ 300",min:0.30,max:0.35,opts:[0.30,0.325,0.35]};
+  if(c<=800) return {name:"Faixa de R$ 301 a R$ 800",min:0.20,max:0.25,opts:[0.20,0.225,0.25]};
+  if(c<=2000) return {name:"Faixa de R$ 801 a R$ 2.000",min:0.15,max:0.20,opts:[0.15,0.175,0.20]};
+  return {name:"Faixa acima de R$ 2.000",min:0.10,max:0.15,opts:[0.10,0.125,0.15]};
+}
+function renderMargins(opts){
+  marginsBox.innerHTML="";
+  for(var i=0;i<opts.length;i++){
+    var b=document.createElement("button");
+    b.type="button";
+    b.className="margin"+(opts[i]===margin?" active":"");
+    b.textContent=(opts[i]*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+    b.setAttribute("data-margin",opts[i]);
+    b.addEventListener("click",function(){
+      margin=parseFloat(this.getAttribute("data-margin"));
+      update();
+    });
+    marginsBox.appendChild(b);
+  }
+}
+function update(){
+  var c=num(cost.value);
+  var e=num(extra.value);
+  var f=num(fee.value)/100;
+  var d=detect(c);
+
+  if(c && (margin<d.min || margin>d.max)) margin=d.min;
+  renderMargins(d.opts);
+
+  range.textContent=d.name;
+  rangeText.textContent=c ? ("Margem disponível nesta faixa: "+(d.min*100)+"% a "+(d.max*100)+"%") : "O aplicativo identificará sua faixa de margem.";
+
+  if(!c){
+    price.textContent="R$ 0,00";
+    profit.textContent="R$ 0,00";
+    chosen.textContent="—";
+    formula.textContent="Digite o custo e escolha uma margem para ver a explicação.";
+    return;
+  }
+
+  if(margin+f>=1){
+    price.textContent="—";
+    profit.textContent="—";
+    chosen.textContent=(margin*100)+"%";
+    formula.textContent="A margem e a taxa não podem somar 100% ou mais.";
+    return;
+  }
+
+  var real=c+e;
+  var sale=real/(1-margin-f);
+  var p=sale-real-(sale*f);
+
+  price.textContent=money(sale);
+  profit.textContent=money(p);
+  chosen.textContent=(margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+  formula.innerHTML="Seu custo total é <b>"+money(real)+"</b>.<br>Com margem de <b>"+(margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%</b>"+(f>0 ? " e taxa de venda de <b>"+(f*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%</b>" : "")+", o cálculo é:<br><b>"+money(real)+" ÷ (1 − "+(margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"+(f>0 ? " − "+(f*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%" : "")+") = "+money(sale)+"</b>.";
+}
+function getData(){
+  var c=num(cost.value);
+  if(!c) return null;
+  var e=num(extra.value);
+  var f=num(fee.value)/100;
+  if(margin+f>=1) return null;
+  var real=c+e;
+  var sale=real/(1-margin-f);
+  var p=sale-real-sale*f;
+  return {piece:piece.value.trim()||"Peça sem nome",cost:c,extra:e,fee:f,margin:margin,sale:sale,profit:p,date:new Date().toISOString()};
+}
+function getHistory(){
+  try{return JSON.parse(localStorage.getItem("precificaAutoHistory")||"[]");}
+  catch(e){return [];}
+}
+function saveHistory(h){
+  localStorage.setItem("precificaAutoHistory",JSON.stringify(h));
+}
+function saveItem(){
+  var item=getData();
+  if(!item){alert("Informe o custo e verifique a margem/taxa.");return;}
+  var h=getHistory();
+  h.unshift(item);
+  saveHistory(h.slice(0,50));
+  alert("Precificação salva com sucesso.");
+}
+function showHistory(){
+  var h=getHistory();
+  panel.style.display="block";
+  if(!h.length){
+    panel.innerHTML="<h3 style='margin-top:0'>📋 Histórico</h3><p class='note'>Nenhuma precificação salva ainda.</p>";
+    return;
+  }
+  var html="<h3 style='margin-top:0'>📋 Histórico</h3>";
+  for(var i=0;i<h.length;i++){
+    var x=h[i];
+    html+="<div class='history-item'><b>"+escapeHtml(x.piece)+"</b><br><span class='note'>"+new Date(x.date).toLocaleString("pt-BR")+" · Custo "+money(x.cost)+" · Margem "+(x.margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%</span><br><strong>"+money(x.sale)+"</strong><br><button class='smallbtn' data-reuse='"+i+"'>Usar novamente</button></div>";
+  }
+  html+="<button class='secondary danger' id='clearHistory' style='width:100%;margin-top:12px'>Apagar histórico</button>";
+  panel.innerHTML=html;
+  var reuse=panel.querySelectorAll("[data-reuse]");
+  for(var j=0;j<reuse.length;j++) reuse[j].addEventListener("click",function(){
+    var x=h[parseInt(this.getAttribute("data-reuse"),10)];
+    piece.value=x.piece; cost.value=x.cost; extra.value=x.extra; fee.value=(x.fee*100).toLocaleString("pt-BR"); margin=x.margin;
+    panel.style.display="none"; update(); window.scrollTo(0,0);
+  });
+  document.getElementById("clearHistory").addEventListener("click",function(){
+    if(confirm("Apagar todo o histórico?")){localStorage.removeItem("precificaAutoHistory");showHistory();}
+  });
+}
+function showSettings(){
+  panel.style.display="block";
+  panel.innerHTML="<h3 style='margin-top:0'>⚙️ Configurações</h3><p class='note'>Estas são as margens que você definiu para a WR Garagem.</p>"+
+  "<div class='range'><b>Até R$ 100</b><span>40% a 50%</span></div>"+
+  "<div class='range'><b>R$ 101 a R$ 300</b><span>30% a 35%</span></div>"+
+  "<div class='range'><b>R$ 301 a R$ 800</b><span>20% a 25%</span></div>"+
+  "<div class='range'><b>R$ 801 a R$ 2.000</b><span>15% a 20%</span></div>"+
+  "<div class='range'><b>Acima de R$ 2.000</b><span>10% a 15%</span></div>";
+}
+function clearAll(){
+  piece.value=""; cost.value=""; extra.value=""; fee.value=""; margin=0.40;
+  panel.style.display="none"; update(); piece.focus();
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch];});
+}
+piece.addEventListener("input",update);
+cost.addEventListener("input",update);
+extra.addEventListener("input",update);
+fee.addEventListener("input",update);
+document.getElementById("saveBtn").addEventListener("click",saveItem);
+document.getElementById("newBtn").addEventListener("click",clearAll);
+document.getElementById("historyBtn").addEventListener("click",showHistory);
+document.getElementById("settingsBtn").addEventListener("click",showSettings);
+update();
+})();
+</script>
+</body>
+</html>
