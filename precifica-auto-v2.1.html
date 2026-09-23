@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Precifica Auto V2.1</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f6f8;color:#172033}
+.app{max-width:480px;margin:auto;min-height:100vh;background:#fff}
+header{padding:28px 22px 18px;background:#0f172a;color:#fff;border-radius:0 0 24px 24px}
+.logo{font-size:13px;letter-spacing:1.8px;font-weight:700;opacity:.75}
+.title{font-size:29px;font-weight:800;margin-top:5px}
+.subtitle{font-size:14px;opacity:.8;margin-top:5px}
+main{padding:20px 18px 34px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 3px 14px rgba(15,23,42,.05)}
+label{display:block;font-size:13px;font-weight:700;margin-bottom:8px;color:#4b5563}
+input{width:100%;font-size:20px;padding:14px;border:1px solid #d6dae1;border-radius:12px;outline:none;background:#fff}
+input:focus{border-color:#64748b;box-shadow:0 0 0 3px rgba(100,116,139,.12)}
+.range{background:#f8fafc;border-radius:14px;padding:14px;margin-top:10px}
+.range b{display:block;font-size:16px}.range span{font-size:13px;color:#64748b}
+.margins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+button{border:0;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
+.margin{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.margin.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.result{background:#ecfdf5;border:1px solid #bbf7d0;text-align:center;padding:20px;border-radius:18px;margin-top:15px}
+.result small{font-weight:700;color:#166534}.price{font-size:40px;font-weight:900;color:#14532d;margin:4px 0}
+.stats{display:flex;justify-content:center;gap:22px;font-size:13px;color:#475569}.stats b{color:#172033}
+.explain{background:#f8fafc}.formula{margin-top:12px;line-height:1.7;font-size:14px}
+.secondary{display:flex;gap:10px;margin-top:12px}
+.secondary button{flex:1;background:#fff;border:1px solid #e2e8f0;color:#334155}
+.primary{width:100%;background:#0f172a;color:#fff;margin-top:12px}
+.note{font-size:12px;color:#64748b;line-height:1.5;margin:10px 2px}
+.panel{display:none}.history-item{padding:13px 0;border-bottom:1px solid #e5e7eb}
+.history-item:last-child{border-bottom:0}
+.smallbtn{padding:8px 10px;font-size:12px;background:#f1f5f9;color:#334155;margin-top:7px}
+.danger{color:#991b1b!important;border-color:#fecaca!important}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;background:#f1f5f9;padding:5px;border-radius:14px}
+.tab{background:transparent;color:#475569;border:0;padding:12px 8px;font-size:13px}
+.tab.active{background:#fff;color:#0f172a;box-shadow:0 1px 5px rgba(15,23,42,.08)}
+.settings-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:8px;align-items:end}
+.settings-grid input{font-size:16px;padding:11px}
+.settings-label{font-size:11px;color:#64748b;font-weight:700;margin-bottom:5px;display:block}
+.save-settings{width:100%;background:#0f172a;color:#fff;margin-top:12px}
+.reset-settings{width:100%;background:#fff;color:#334155;border:1px solid #e2e8f0;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="logo">PRECIFICA AUTO</div>
+<div class="title">Preço certo, sem complicação.</div>
+<div class="subtitle">Duas formas de precificar peças automotivas</div>
+</header>
+<main>
+
+<div class="tabs" role="tablist">
+<button type="button" class="tab active" id="tabMargin">📊 Margem bruta</button>
+<button type="button" class="tab" id="tabSimple">➕ Acréscimo simples</button>
+</div>
+
+<section id="marginView">
+<section class="card">
+<label>1. Nome da peça</label>
+<input id="piece" placeholder="Ex.: Junta homocinética" autocomplete="off">
+<div style="height:14px"></div>
+<label>2. Quanto você pagou pela peça?</label>
+<input id="cost" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off">
+<div class="range">
+<b id="range">Digite o custo da peça</b>
+<span id="rangeText">O aplicativo identificará sua faixa de margem.</span>
+</div>
+</section>
+
+<section class="card">
+<label>3. Escolha sua margem</label>
+<div class="margins" id="margins"></div>
+<div class="note">As opções mudam automaticamente conforme o valor da peça.</div>
+</section>
+
+<section class="card">
+<label>4. Custos adicionais (se houver)</label>
+<input id="extra" inputmode="decimal" placeholder="Frete / outros: R$ 0,00" autocomplete="off">
+<div style="height:12px"></div>
+<label>5. Taxa sobre a venda (se houver)</label>
+<input id="fee" inputmode="decimal" placeholder="Ex.: 3% ou 0%" autocomplete="off">
+</section>
+
+<div class="result">
+<small>PREÇO SUGERIDO PARA COBRAR</small>
+<div class="price" id="price">R$ 0,00</div>
+<div class="stats">
+<span>Lucro: <b id="profit">R$ 0,00</b></span>
+<span>Margem: <b id="chosen">—</b></span>
+</div>
+</div>
+
+<details class="card explain">
+<summary>💡 Entenda o cálculo</summary>
+<div class="formula" id="formula">Digite o custo e escolha uma margem para ver a explicação.</div>
+</details>
+
+<button class="primary" id="saveBtn">💾 Salvar precificação</button>
+
+<div class="secondary">
+<button id="newBtn">↻ Nova peça</button>
+<button id="historyBtn">📋 Histórico</button>
+</div>
+<div class="secondary">
+<button id="settingsBtn">⚙️ Configurações</button>
+</div>
+
+</section>
+
+<section id="simpleView" style="display:none">
+<section class="card">
+<label>1. Quanto você pagou pela peça?</label>
+<input id="simpleCost" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off">
+<div class="range">
+<b id="simpleRange">Digite o custo da peça</b>
+<span id="simpleRangeText">A mesma tabela de percentuais será usada nesta calculadora.</span>
+</div>
+</section>
+
+<section class="card">
+<label>2. Escolha o acréscimo</label>
+<div class="margins" id="simpleMargins"></div>
+<div class="note">Aqui o percentual é acrescentado diretamente sobre o custo. Ex.: R$ 100 + 40% = R$ 140.</div>
+</section>
+
+<div class="result">
+<small>PREÇO DE VENDA</small>
+<div class="price" id="simplePrice">R$ 0,00</div>
+<div class="stats">
+<span>Acréscimo: <b id="simpleChosen">—</b></span>
+<span>Lucro: <b id="simpleProfit">R$ 0,00</b></span>
+</div>
+</div>
+
+<details class="card explain">
+<summary>💡 Entenda o cálculo</summary>
+<div class="formula" id="simpleFormula">Digite o custo para ver a conta.</div>
+</details>
+</section>
+
+<div class="secondary">
+<button id="newBtn2">↻ Nova conta</button>
+</div>
+
+<section class="card panel" id="panel"></section>
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var piece=document.getElementById("piece");
+var cost=document.getElementById("cost");
+var extra=document.getElementById("extra");
+var fee=document.getElementById("fee");
+var range=document.getElementById("range");
+var rangeText=document.getElementById("rangeText");
+var price=document.getElementById("price");
+var profit=document.getElementById("profit");
+var chosen=document.getElementById("chosen");
+var formula=document.getElementById("formula");
+var marginsBox=document.getElementById("margins");
+var panel=document.getElementById("panel");
+var defaultBands=[
+  {minCost:0,maxCost:100,min:0.40,max:0.50,opts:[0.40,0.45,0.50]},
+  {minCost:101,maxCost:300,min:0.30,max:0.35,opts:[0.30,0.325,0.35]},
+  {minCost:301,maxCost:800,min:0.20,max:0.25,opts:[0.20,0.225,0.25]},
+  {minCost:801,maxCost:2000,min:0.15,max:0.20,opts:[0.15,0.175,0.20]},
+  {minCost:2001,maxCost:null,min:0.10,max:0.15,opts:[0.10,0.125,0.15]}
+];
+var bands=loadBands();
+var margin=0.40;
+var simpleMargin=0.40;
+var tabMargin=document.getElementById("tabMargin");
+var tabSimple=document.getElementById("tabSimple");
+var marginView=document.getElementById("marginView");
+var simpleView=document.getElementById("simpleView");
+var simpleCost=document.getElementById("simpleCost");
+var simpleRange=document.getElementById("simpleRange");
+var simpleRangeText=document.getElementById("simpleRangeText");
+var simpleMargins=document.getElementById("simpleMargins");
+var simplePrice=document.getElementById("simplePrice");
+var simpleChosen=document.getElementById("simpleChosen");
+var simpleProfit=document.getElementById("simpleProfit");
+var simpleFormula=document.getElementById("simpleFormula");
+
+function num(v){
+  if(v===null || v===undefined || v==="") return 0;
+  var s=String(v).trim().replace(/R\\$/g,"").replace(/\\s/g,"");
+  if(s.indexOf(",")>=0 && s.indexOf(".")>=0){
+    s=s.replace(/\\./g,"").replace(",",".");
+  }else{
+    s=s.replace(",",".");
+  }
+  s=s.replace(/[^0-9.-]/g,"");
+  var n=parseFloat(s);
+  return isFinite(n)?n:0;
+}
+function money(v){
+  return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function loadBands(){
+  try{
+    var saved=JSON.parse(localStorage.getItem("precificaAutoBands")||"null");
+    if(Array.isArray(saved) && saved.length===5) return saved;
+  }catch(e){}
+  return JSON.parse(JSON.stringify(defaultBands));
+}
+function saveBands(){localStorage.setItem("precificaAutoBands",JSON.stringify(bands));}
+function detect(c){
+  if(!c) return {name:"Digite o custo da peça",min:0,max:0,opts:[0.40,0.45,0.50]};
+  for(var i=0;i<bands.length;i++){
+    var b= bands[i];
+    if(c>=b.minCost && (b.maxCost===null || c<=b.maxCost)) return {name:bandName(i),min:b.min,max:b.max,opts:b.opts};
+  }
+  return {name:bandName(4),min:bands[4].min,max:bands[4].max,opts:bands[4].opts};
+}
+function bandName(i){
+  var b=bands[i];
+  if(i===0) return "Faixa até R$ 100";
+  if(i===4) return "Faixa acima de R$ 2.000";
+  return "Faixa de R$ "+formatInt(b.minCost)+" a R$ "+formatInt(b.maxCost);
+}
+function formatInt(v){return Number(v).toLocaleString("pt-BR");}
+
+function renderMargins(opts){
+  marginsBox.innerHTML="";
+  for(var i=0;i<opts.length;i++){
+    var b=document.createElement("button");
+    b.type="button";
+    b.className="margin"+(opts[i]===margin?" active":"");
+    b.textContent=(opts[i]*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+    b.setAttribute("data-margin",opts[i]);
+    b.addEventListener("click",function(){
+      margin=parseFloat(this.getAttribute("data-margin"));
+      update();
+    });
+    marginsBox.appendChild(b);
+  }
+}
+function update(){
+  var c=num(cost.value);
+  var e=num(extra.value);
+  var f=num(fee.value)/100;
+  var d=detect(c);
+
+  if(c && (margin<d.min || margin>d.max)) margin=d.min;
+  renderMargins(d.opts);
+
+  range.textContent=d.name;
+  rangeText.textContent=c ? ("Margem disponível nesta faixa: "+(d.min*100)+"% a "+(d.max*100)+"%") : "O aplicativo identificará sua faixa de margem.";
+
+  if(!c){
+    price.textContent="R$ 0,00";
+    profit.textContent="R$ 0,00";
+    chosen.textContent="—";
+    formula.textContent="Digite o custo e escolha uma margem para ver a explicação.";
+    return;
+  }
+
+  if(margin+f>=1){
+    price.textContent="—";
+    profit.textContent="—";
+    chosen.textContent=(margin*100)+"%";
+    formula.textContent="A margem e a taxa não podem somar 100% ou mais.";
+    return;
+  }
+
+  var real=c+e;
+  var sale=real/(1-margin-f);
+  var p=sale-real-(sale*f);
+
+  price.textContent=money(sale);
+  profit.textContent=money(p);
+  chosen.textContent=(margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%";
+  formula.innerHTML="Seu custo total é <b>"+money(real)+"</b>.<br>Com margem de <b>"+(margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%</b>"+(f>0 ? " e taxa de venda de <b>"+(f*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%</b>" : "")+", o cálculo é:<br><b>"+money(real)+" ÷ (1 − "+(margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%"+(f>0 ? " − "+(f*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%" : "")+") = "+money(sale)+"</b>.";
+}
+function getData(){
+  var c=num(cost.value);
+  if(!c) return null;
+  var e=num(extra.value);
+  var f=num(fee.value)/100;
+  if(margin+f>=1) return null;
+  var real=c+e;
+  var sale=real/(1-margin-f);
+  var p=sale-real-sale*f;
+  return {piece:piece.value.trim()||"Peça sem nome",cost:c,extra:e,fee:f,margin:margin,sale:sale,profit:p,date:new Date().toISOString()};
+}
+function getHistory(){
+  try{return JSON.parse(localStorage.getItem("precificaAutoHistory")||"[]");}
+  catch(e){return [];}
+}
+function saveHistory(h){
+  localStorage.setItem("precificaAutoHistory",JSON.stringify(h));
+}
+function saveItem(){
+  var item=getData();
+  if(!item){alert("Informe o custo e verifique a margem/taxa.");return;}
+  var h=getHistory();
+  h.unshift(item);
+  saveHistory(h.slice(0,50));
+  alert("Precificação salva com sucesso.");
+}
+function showHistory(){
+  var h=getHistory();
+  panel.style.display="block";
+  if(!h.length){
+    panel.innerHTML="<h3 style='margin-top:0'>📋 Histórico</h3><p class='note'>Nenhuma precificação salva ainda.</p>";
+    return;
+  }
+  var html="<h3 style='margin-top:0'>📋 Histórico</h3>";
+  for(var i=0;i<h.length;i++){
+    var x=h[i];
+    html+="<div class='history-item'><b>"+escapeHtml(x.piece)+"</b><br><span class='note'>"+new Date(x.date).toLocaleString("pt-BR")+" · Custo "+money(x.cost)+" · Margem "+(x.margin*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%</span><br><strong>"+money(x.sale)+"</strong><br><button class='smallbtn' data-reuse='"+i+"'>Usar novamente</button></div>";
+  }
+  html+="<button class='secondary danger' id='clearHistory' style='width:100%;margin-top:12px'>Apagar histórico</button>";
+  panel.innerHTML=html;
+  var reuse=panel.querySelectorAll("[data-reuse]");
+  for(var j=0;j<reuse.length;j++) reuse[j].addEventListener("click",function(){
+    var x=h[parseInt(this.getAttribute("data-reuse"),10)];
+    piece.value=x.piece; cost.value=x.cost; extra.value=x.extra; fee.value=(x.fee*100).toLocaleString("pt-BR"); margin=x.margin;
+    panel.style.display="none"; update(); window.scrollTo(0,0);
+  });
+  document.getElementById("clearHistory").addEventListener("click",function(){
+    if(confirm("Apagar todo o histórico?")){localStorage.removeItem("precificaAutoHistory");showHistory();}
+  });
+}
+function showSettings(){
+  panel.style.display="block";
+  var html="<h3 style='margin-top:0'>⚙️ Configurações</h3><p class='note'>Edite as faixas de custo e os percentuais. A mesma tabela será usada nas duas calculadoras.</p>";
+  for(var i=0;i<bands.length;i++){
+    var b=bands[i];
+    html+="<div class='range' style='margin-bottom:10px'><b>Faixa "+(i+1)+"</b><div class='settings-grid'>"+
+      "<div><span class='settings-label'>Custo mínimo</span><input inputmode='decimal' data-mincost='"+i+"' value='"+b.minCost.toLocaleString('pt-BR')+"'></div>"+
+      "<div><span class='settings-label'>Custo máximo</span><input inputmode='decimal' data-maxcost='"+i+"' value='"+(b.maxCost===null?'':b.maxCost.toLocaleString('pt-BR'))+"' placeholder='Sem limite'></div>"+
+      "<div><span class='settings-label'>Margem/acréscimo</span><input disabled value='"+(b.min*100).toLocaleString('pt-BR')+'% a '+(b.max*100).toLocaleString('pt-BR')+'%'+"'></div>"+
+      "</div><div class='settings-grid' style='margin-top:8px'>"+
+      "<div><span class='settings-label'>Percentual mínimo</span><input inputmode='decimal' data-set-min='"+i+"' value='"+(b.min*100).toLocaleString('pt-BR')+"'></div>"+
+      "<div><span class='settings-label'>Percentual máximo</span><input inputmode='decimal' data-set-max='"+i+"' value='"+(b.max*100).toLocaleString('pt-BR')+"'></div>"+
+      "<div></div></div></div>";
+  }
+  html+="<button type='button' class='save-settings' id='saveSettings'>💾 Salvar configurações</button><button type='button' class='reset-settings' id='resetSettings'>↺ Restaurar tabela original</button>";
+  panel.innerHTML=html;
+  document.getElementById('saveSettings').addEventListener('click',function(){
+    var minCosts=panel.querySelectorAll('[data-mincost]'), maxCosts=panel.querySelectorAll('[data-maxcost]'), mins=panel.querySelectorAll('[data-set-min]'), maxs=panel.querySelectorAll('[data-set-max]');
+    var next=[];
+    for(var i=0;i<5;i++){
+      var minCost=num(minCosts[i].value), maxCost=maxCosts[i].value.trim()===''?null:num(maxCosts[i].value), mn=num(mins[i].value)/100, mx=num(maxs[i].value)/100;
+      if(i===0) minCost=0;
+      if(i===4) maxCost=null;
+      if(minCost<0 || (maxCost!==null && maxCost<=minCost) || mn<0 || mx<0 || mn>1 || mx>1 || mn>mx){alert('Confira os valores da faixa '+(i+1)+'.');return;}
+      if(i>0 && minCost<=next[i-1].minCost){alert('Os custos mínimos das faixas devem estar em ordem crescente.');return;}
+      if(i>0 && next[i-1].maxCost!==null && minCost!==next[i-1].maxCost+1){alert('As faixas de custo devem ficar em sequência.');return;}
+      next.push({minCost:minCost,maxCost:maxCost,min:mn,max:mx,opts:makeOpts(mn,mx)});
+    }
+    bands=next; saveBands(); margin=clampMargin(margin,detect(num(cost.value))); simpleMargin=clampMargin(simpleMargin,detect(num(simpleCost.value))); update(); updateSimple(); showSettings(); alert('Configurações salvas.');
+  });
+  document.getElementById('resetSettings').addEventListener('click',function(){
+    if(confirm('Restaurar a tabela original?')){bands=JSON.parse(JSON.stringify(defaultBands));saveBands();margin=0.40;simpleMargin=0.40;update();updateSimple();showSettings();}
+  });
+}
+
+function makeOpts(min,max){
+  var mid=(min+max)/2;
+  return [min,mid,max];
+}
+function clampMargin(value,d){return value>=d.min && value<=d.max?value:d.min;}
+function escapeAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderSimpleMargins(opts){
+  simpleMargins.innerHTML="";
+  for(var i=0;i<opts.length;i++){
+    var b=document.createElement('button'); b.type='button'; b.className='margin'+(opts[i]===simpleMargin?' active':'');
+    b.textContent=(opts[i]*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+    b.addEventListener('click',function(){simpleMargin=parseFloat(this.textContent.replace('%','').replace(',','.'))/100; updateSimple();});
+    simpleMargins.appendChild(b);
+  }
+}
+function updateSimple(){
+  var c=num(simpleCost.value), d=detect(c);
+  if(c && (simpleMargin<d.min || simpleMargin>d.max)) simpleMargin=d.min;
+  renderSimpleMargins(d.opts);
+  simpleRange.textContent=d.name;
+  simpleRangeText.textContent=c ? ('Acréscimo disponível nesta faixa: '+(d.min*100)+'% a '+(d.max*100)+'%') : 'A mesma tabela de percentuais será usada nesta calculadora.';
+  if(!c){simplePrice.textContent='R$ 0,00';simpleProfit.textContent='R$ 0,00';simpleChosen.textContent='—';simpleFormula.textContent='Digite o custo para ver a conta.';return;}
+  var sale=c*(1+simpleMargin), p=sale-c;
+  simplePrice.textContent=money(sale); simpleProfit.textContent=money(p); simpleChosen.textContent=(simpleMargin*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+  simpleFormula.innerHTML=money(c)+' × (1 + '+(simpleMargin*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%) = <b>'+money(sale)+'</b>.';
+}
+function setTab(which){
+  var simple=which==='simple'; marginView.style.display=simple?'none':'block'; simpleView.style.display=simple?'block':'none';
+  tabMargin.classList.toggle('active',!simple); tabSimple.classList.toggle('active',simple);
+  if(simple) updateSimple(); else update();
+}
+
+function clearAll(){
+  piece.value=""; cost.value=""; extra.value=""; fee.value=""; margin=0.40;
+  panel.style.display="none"; update(); piece.focus();
+}
+function clearSimple(){simpleCost.value="";simpleMargin=0.40;updateSimple();simpleCost.focus();}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch];});
+}
+piece.addEventListener("input",update);
+cost.addEventListener("input",update);
+extra.addEventListener("input",update);
+fee.addEventListener("input",update);
+document.getElementById("saveBtn").addEventListener("click",saveItem);
+document.getElementById("newBtn").addEventListener("click",clearAll);
+document.getElementById("historyBtn").addEventListener("click",showHistory);
+document.getElementById("settingsBtn").addEventListener("click",showSettings);
+tabMargin.addEventListener('click',function(){setTab('margin');});
+tabSimple.addEventListener('click',function(){setTab('simple');});
+simpleCost.addEventListener('input',updateSimple);
+document.getElementById('newBtn2').addEventListener('click',clearSimple);
+update();
+updateSimple();
+})();
+</script>
+</body>
+</html>
